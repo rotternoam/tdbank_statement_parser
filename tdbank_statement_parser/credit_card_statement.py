@@ -10,18 +10,19 @@ from pydash import py_
 from .common import *
 
 default_table_heading = re.compile(
-    r"^\s*Activity Date\s{1,}"
-    r"Post Date\s{1,}"
-    r"Reference Number\s{1,}"
-    r"Description\s{1,}"
-    r"Amount$"
+    r"^\s*Activity\s+Date\s+"
+    r"Post\s+Date\s+"
+    r"Reference\s+Number\s+"
+    r"Description\s+"
+    r"Amount$",
+    re.I
 )
 
 default_table_row = re.compile(
-    r"^\s*(?P<activity_date>\w{3} \d+)?\s{4,}"
-    r"(?P<post_date>\w{3} \d+)?\s{4,}"
-    r"(?P<reference_number>\d+)?\s{4,}"
-    r"(?P<description>.*?)\s{4,}"
+    r"^\s*(?P<activity_date>\w{3}\s+\d+)?\s+"
+    r"(?P<post_date>\w{3}\s+\d+)?\s+"
+    r"(?P<reference_number>\d+)?\s+"
+    r"(?P<description>.*?)\s+"
     r"(?P<amount>[\d\,\.]+)\s*(?P<credit_flag>CR)?$"
 )
 

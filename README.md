@@ -73,6 +73,15 @@ $ find -type f -name "*.pdf" | python tdbank_statement_parser/main.py > data.ndj
 $ python tdbank_statement_parser/main.py  **/*.pdf
 ```
 
+### Quick Excel export
+
+To parse all PDFs from the local `inputs/` folder and write an Excel workbook:
+
+```bash
+$ python -m tdbank_statement_parser.xlsx_export
+```
+
+This generates `parsed_statements.xlsx` in the repository root.
 
 ### Standard output JSON lines:
 ```json

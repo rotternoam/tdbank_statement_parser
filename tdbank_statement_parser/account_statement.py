@@ -69,9 +69,9 @@ amazon_parse_re = re.compile(
     r"(?P<amazon_trans_id>[A-Z0-9 ]*)\s*$"
 )
 
-default_table_heading = re.compile(r"^POSTING DATE\s{2,}DESCRIPTION\s{4,}AMOUNT$")
+default_table_heading = re.compile(r"^POSTING\s*DATE\s+DESCRIPTION\s+AMOUNT$", re.I)
 default_table_row = re.compile(
-    r"^(?P<posting_date>\d+\/\d+)\s{4,}(?P<description>.*?)\s{4,}(?P<amount>[\d\,\.]+)$"
+    r"^(?P<posting_date>\d+\/\d+)\s+(?P<description>.*?)\s+(?P<amount>[\d\,\.]+)$"
 )
 
 
@@ -95,6 +95,8 @@ def normalize_account_statement(rec: dict, table_name: str, metadata: dict) -> d
     normalize_map = {
         "check_date": _normalize_date,
         "amount": to_decimal,
+        "balance": to_decimal,
+        "date": _normalize_date,
         "posting_date": _normalize_date,
         "parsed_desc": py_.pick_by,
         "description": py_.identity,
@@ -139,41 +141,41 @@ parse_config = {
     "normalize": normalize_account_statement,
     "metadata_patterns": [
         (
-            r"Statement Period\:\s+"
-            r"(?P<statement_period_start>\w+\s+\d+\s+\d+)\-"
-            r"(?P<statement_period_end>\w+\s+\d+\s+\d+)",
+            r"Statement\s*Period\s*:\s*"
+            r"(?P<statement_period_start>\w+\d+\d+)\-"
+            r"(?P<statement_period_end>\w+\d+\d+)",
             get_date,
         ),
-        (r"Cust Ref \#\:\s+(?P<customer_reference_number>.+?)\s*$", py_.clean),
-        (r"Primary Account \#\:\s+(?P<primary_account_number>.+?)\s*$", py_.clean),
-        (r"Beginning Balance\s+(?P<beginning_balance>[0-9.,]+)($|\s{10})", to_decimal),
+        (r"Cust\s*Ref\s*\#\s*:\s*(?P<customer_reference_number>.+?)(?:\s|$)", py_.clean),
+        (r"Primary\s*Account\s*\#\s*:\s*(?P<primary_account_number>.+?)(?:\s|$)", py_.clean),
+        (r"Beginning\s*Balance\s+(?P<beginning_balance>[0-9.,]+)(?:\s|$)", to_decimal),
         (
-            r"Electronic Deposits\s+(?P<electronic_deposits>[0-9.,]+)($|\s{10})",
+            r"Electronic\s*Deposits\s+(?P<electronic_deposits>[0-9.,]+)(?:\s|$)",
             to_decimal,
         ),
-        (r"Checks Paid\s+(?P<checks_paid>[0-9.,]+)($|\s{10})", to_decimal),
+        (r"Checks\s*Paid\s+(?P<checks_paid>[0-9.,]+)(?:\s|$)", to_decimal),
         (
-            r"Electronic Payments\s+(?P<electronic_payments>[0-9.,]+)($|\s{10})",
+            r"Electronic\s*Payments\s+(?P<electronic_payments>[0-9.,]+)(?:\s|$)",
             to_decimal,
         ),
-        (r"Ending Balance\s+(?P<ending_balance>[0-9.,]+)($|\s{10})", to_decimal),
+        (r"Ending\s*Balance\s+(?P<ending_balance>[0-9.,]+)(?:\s|$)", to_decimal),
         (
-            r"Average Collected Balance\s+(?P<average_collected_balance>[0-9.,]+)($|\s{10})",
-            to_decimal,
-        ),
-        (
-            r"Interest Earned This Period\s+(?P<interest_earned_this_period>[0-9.,]+)($|\s{10})",
+            r"Average\s*Collected\s*Balance\s+(?P<average_collected_balance>[0-9.,]+)(?:\s|$)",
             to_decimal,
         ),
         (
-            r"Interest Paid Year-to-Date\s+(?P<interest_paid_ytd>[0-9.,]+)($|\s{10})",
+            r"Interest\s*Earned\s*This\s*Period\s+(?P<interest_earned_this_period>[0-9.,]+)(?:\s|$)",
             to_decimal,
         ),
         (
-            r"Annual Percentage Yield Earned\s+(?P<annual_percent_yield_earned>[0-9.,]+)\%($|\s{10})",
+            r"Interest\s*Paid\s*Year\s*\-?\s*to\s*\-?\s*Date\s+(?P<interest_paid_ytd>[0-9.,]+)(?:\s|$)",
             to_decimal,
         ),
-        (r"Days in Period\s+(?P<days_in_period>[0-9.,]+)($|\s{10})", int),
+        (
+            r"Annual\s*Percentage\s*Yield\s*Earned\s+(?P<annual_percent_yield_earned>[0-9.,]+)\%?(?:\s|$)",
+            to_decimal,
+        ),
+        (r"Days\s*in\s*Period\s+(?P<days_in_period>[0-9.,]+)(?:\s|$)", int),
     ],
     "tables": {
         "Deposits": {
@@ -186,35 +188,35 @@ parse_config = {
         "Electronic Deposits": {
             "transaction_type": CREDIT,
             "table_name": "Electronic Deposits",
-            "table_name_re": r"^Electronic Deposits(\s+\(continued\))?\s*$",
+            "table_name_re": r"^Electronic\s*Deposits(\s+\(continued\))?\s*$",
             "table_start": default_table_heading,
             "table_row": default_table_row,
         },
         "Electronic Payments": {
             "transaction_type": DEBIT,
             "table_name": "Electronic Payments",
-            "table_name_re": r"^Electronic Payments(\s+\(continued\))?\s*$",
+            "table_name_re": r"^Electronic\s*Payments(\s+\(continued\))?\s*$",
             "table_start": default_table_heading,
             "table_row": default_table_row,
         },
         "Other Withdrawals": {
             "transaction_type": DEBIT,
             "table_name": "Other Withdrawals",
-            "table_name_re": r"^Other Withdrawals(\s+\(continued\))?\s*$",
+            "table_name_re": r"^Other\s*Withdrawals(\s+\(continued\))?\s*$",
             "table_start": default_table_heading,
             "table_row": default_table_row,
         },
         "Other Credits": {
             "transaction_type": CREDIT,
             "table_name": "Other Credits",
-            "table_name_re": r"^Other Credits(\s+\(continued\))?\s*$",
+            "table_name_re": r"^Other\s*Credits(\s+\(continued\))?\s*$",
             "table_start": default_table_heading,
             "table_row": default_table_row,
         },
         "Service Charges": {
             "transaction_type": DEBIT,
             "table_name": "Service Charges",
-            "table_name_re": r"^Service Charges(\s+\(continued\))?\s*$",
+            "table_name_re": r"^Service\s*Charges(\s+\(continued\))?\s*$",
             "table_start": default_table_heading,
             "table_row": default_table_row,
         },
